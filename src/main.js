@@ -538,48 +538,44 @@ const vertexShaderSource = `
 
     float side = sin(a_seed * 2.41);
     float grain = fract(sin(a_seed * 9.17) * 43758.5453);
-    float cloudA = sin(a_position.x * 1.85 + a_position.y * 2.55 + a_seed * 0.61);
-    float cloudB = sin(a_position.z * 2.25 - a_position.y * 1.55 + a_seed * 1.27);
-    float cloudC = sin((a_position.x + a_position.z) * 1.25 + a_position.y * 2.05 + a_seed * 0.37);
-    float cloudDensity = (cloudA + cloudB + cloudC) / 3.0;
-    float pocket = smoothstep(-0.18, 0.72, cloudDensity);
-    float starFleck = smoothstep(0.992, 1.0, randomA);
-    float filamentGate = max(pocket, starFleck);
-    vec3 radial = normalize(a_position + vec3(0.001, 0.0, 0.0));
-    vec3 swirlAxis = normalize(vec3(
-      sin(a_seed * 0.73) * 0.34,
+    float strandId = floor(grain * 11.0);
+    float strandPhase = strandId * 0.73 + a_seed * 0.19;
+    float heightBand = fract((a_position.y + 2.2) * 2.8 + strandId * 0.17);
+    float strandCore = abs(sin(strandId * 1.37 + a_position.y * 5.2 + a_position.x * 2.7 + a_position.z * 1.8));
+    float layerGate = smoothstep(0.72, 0.98, heightBand) * (1.0 - smoothstep(0.98, 1.0, heightBand));
+    float strandGate = max(smoothstep(0.955, 0.996, strandCore), layerGate * 0.88);
+    float filamentGate = max(strandGate, smoothstep(0.9975, 1.0, randomA));
+    vec3 laneDir = normalize(vec3(
+      sin(strandId * 1.91 + side * 0.35) * 0.48,
       1.0,
-      cos(a_seed * 0.91) * 0.28
+      cos(strandId * 1.37 + grain * 2.0) * 0.34
     ));
-    vec3 swirlDir = normalize(cross(swirlAxis, radial) + vec3(0.001, 0.0, 0.0));
+    vec3 crossDir = normalize(cross(laneDir, vec3(0.0, 0.0, 1.0)));
     vec3 normalFlow = normalize(a_normal + vec3(0.0, 0.8, 0.0));
-    float curl = age * (1.65 + grain * 1.35) + a_position.y * 1.35 + a_seed * 0.23;
-    float wave = sin(curl) * 0.5 + sin(curl * 0.58 + cloudB * 2.0) * 0.5;
-    vec3 nebulaDir = normalize(
-      radial * (0.34 + pocket * 0.34) +
-      swirlDir * (0.66 + wave * 0.46) +
-      normalFlow * (0.32 + topOrder * 0.18) +
-      vec3(side * 0.12, 0.22 + topOrder * 0.18, cos(curl) * 0.12)
+    float curl = age * (3.1 + grain * 1.2) + strandPhase + a_position.y * 2.4;
+    float wave = sin(curl) * 0.5 + sin(curl * 0.63 + strandId) * 0.5;
+    float thread = sin((a_position.y + age * 0.85) * 8.4 + strandId * 1.9 + a_position.x * 1.35);
+    vec3 ribbon = normalize(
+      laneDir * (1.24 + 0.56 * wave) +
+      crossDir * (0.32 * thread) +
+      normalFlow * (0.28 + strandGate * 0.16)
     );
     vec3 filament = vec3(
       sin(age * 2.65 + a_seed * 1.9 + a_position.y * 2.1),
       sin(age * 1.38 + a_seed * 1.3),
       cos(age * 2.3 + a_seed * 2.2 + a_position.x * 1.8)
-    ) * (0.075 + pocket * 0.09);
+    ) * (0.045 + strandGate * 0.085);
     float peel = smoothstep(0.0, 0.36, scatter);
-    float longTrail = 0.38 + grain * 0.72 + pocket * 0.58 + topOrder * 0.52;
-    float sparsePull = 0.14 + filamentGate * 0.82;
-    vec3 flowOffset = (nebulaDir * longTrail * sparsePull + filament) * mist;
-    flowOffset += normalFlow * peel * mist * filamentGate * 0.18;
-    float flowLimit = 0.72 + pocket * 0.54 + topOrder * 0.34;
+    float longTrail = 0.48 + grain * 0.58 + topOrder * 1.35;
+    float sparsePull = 0.01 + filamentGate * 1.36;
+    vec3 flowOffset = (ribbon * longTrail * sparsePull + filament) * mist;
+    flowOffset += normalFlow * peel * mist * filamentGate * 0.38;
+    float flowLimit = 0.82 + topOrder * 0.82 + strandGate * 0.28;
     float flowLength = length(flowOffset);
     if (flowLength > flowLimit) {
       flowOffset = normalize(flowOffset) * flowLimit;
     }
     vec3 dissolvedPosition = a_position + flowOffset;
-    float lobe = sin(a_seed * 0.83 + a_position.y * 1.7) * 0.5 + sin(a_seed * 1.21 + a_position.x * 1.3) * 0.5;
-    vec3 nebulaBound = vec3(2.08 + lobe * 0.16, 2.72 + topOrder * 0.18, 1.9 + lobe * 0.12);
-    dissolvedPosition = clamp(dissolvedPosition, -nebulaBound, nebulaBound);
     p = mix(dissolvedPosition, a_position, returnFlow);
     p += vec3(
       sin(u_time * 0.9 + a_seed + p.y * 2.1) * 0.0008,
@@ -624,19 +620,19 @@ const vertexShaderSource = `
     float diffuse = max(dot(nRot, keyLight), 0.0);
     float fill = max(dot(nRot, fillLight), 0.0);
     float rim = pow(1.0 - max(dot(nRot, vec3(0.0, 0.0, 1.0)), 0.0), 2.0);
-    float shade = 0.9 + diffuse * 0.28 + fill * 0.12 + rim * 0.08;
+    float shade = 0.98 + diffuse * 0.3 + fill * 0.13 + rim * 0.08;
     float airy = 1.0 + mist * (0.08 + fract(sin(a_seed * 5.31) * 43758.5453) * 0.1);
     v_color = clamp(a_color * shade * airy, 0.0, 1.0);
     v_alpha = 1.0;
-    float visibleNebula = 1.0 - smoothstep(2.8, 3.55, age);
-    float gatherNebula = smoothstep(3.0 + returnDelay, 3.62 + returnDelay, age);
-    float nebulaWindow = clamp(max(visibleNebula, gatherNebula), 0.0, 1.0);
-    float hiddenHold = smoothstep(3.0, 3.35, age) * (1.0 - smoothstep(3.38 + returnDelay, 3.72 + returnDelay, age));
-    float transitionKeep = max(filamentGate * nebulaWindow, 0.028);
+    float dissolveLines = 1.0 - smoothstep(1.65, 2.45, age);
+    float gatherLines = smoothstep(3.18 + returnDelay, 3.78 + returnDelay, age);
+    float filamentWindow = clamp(max(dissolveLines, gatherLines), 0.0, 1.0);
+    float hiddenHold = smoothstep(2.65, 3.0, age) * (1.0 - smoothstep(3.15 + returnDelay, 3.58 + returnDelay, age));
+    float transitionKeep = max(filamentGate * filamentWindow, 0.001);
     float returnReveal = smoothstep(0.86, 1.0, returnFlow);
     v_keep = mix(1.0, transitionKeep, mist * (1.0 - returnReveal));
     v_keep *= 1.0 - hiddenHold * (1.0 - returnReveal) * 0.995;
-    v_flow = mist * nebulaWindow * filamentGate * (0.35 + pocket * 0.65);
+    v_flow = mist * filamentWindow * filamentGate * (0.45 + strandGate * 0.55);
   }
 `;
 
@@ -654,11 +650,11 @@ const fragmentShaderSource = `
     float dist = length(uv);
     if (dist > 0.5) discard;
     float dotSoft = smoothstep(0.5, 0.12, dist);
-    vec2 streakUv = vec2(uv.x * 2.2 + uv.y * 0.35, uv.y * 0.74);
+    vec2 streakUv = vec2(uv.x * 6.8 + uv.y * 1.15, uv.y * 0.42);
     float streakDist = length(streakUv);
     float streakSoft = smoothstep(0.48, 0.08, streakDist);
-    float soft = mix(dotSoft, streakSoft, smoothstep(0.08, 0.6, v_flow));
-    vec3 edgeColor = v_color * mix(0.26, 0.72, smoothstep(0.0, 0.45, v_flow));
+    float soft = mix(dotSoft, streakSoft, smoothstep(0.02, 0.35, v_flow));
+    vec3 edgeColor = v_color * mix(0.34, 0.78, smoothstep(0.0, 0.45, v_flow));
     gl_FragColor = vec4(mix(edgeColor, v_color, soft), 1.0);
   }
 `;
