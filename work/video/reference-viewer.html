@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reference Video</title>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: #000;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    video {
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+
+    nav {
+      position: fixed;
+      left: 12px;
+      top: 12px;
+      display: flex;
+      gap: 8px;
+      z-index: 2;
+    }
+
+    button {
+      border: 1px solid #777;
+      border-radius: 4px;
+      padding: 8px 10px;
+      color: #fff;
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+  <video id="referenceVideo" src="./reference.mov" muted playsinline controls></video>
+  <nav>
+    <button data-time="1">1s</button>
+    <button data-time="4">4s</button>
+    <button data-time="7">7s</button>
+    <button data-time="10">10s</button>
+    <button data-time="13">13s</button>
+    <button data-time="16">16s</button>
+  </nav>
+  <script>
+    const video = document.getElementById("referenceVideo");
+    document.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", () => {
+        video.currentTime = Number(button.dataset.time);
+        video.pause();
+      });
+    });
+  </script>
+</body>
+</html>
