@@ -1,12 +1,13 @@
 import {
   INITIAL_ROTATION_X,
   INITIAL_ZOOM,
+  DEFAULT_MOTION_PARAMS,
   MAX_DPR,
   MAX_PARTICLES,
   MODEL_URL,
-  POINT_SIZE,
 } from "./config.js";
 import { createControls } from "./controls.js";
+import { createDebugPanel } from "./debug-panel.js";
 import { parseGlb } from "./gl/glb-loader.js";
 import {
   createProgram,
@@ -39,6 +40,7 @@ class ParticleApp {
     this.particleCount = 0;
     this.loaded = false;
     this.startTime = performance.now();
+    this.motionParams = { ...DEFAULT_MOTION_PARAMS };
     this.state = {
       rotationX: INITIAL_ROTATION_X,
       rotationY: 0,
@@ -68,6 +70,14 @@ class ParticleApp {
       "u_aspect",
       "u_zoom",
       "u_pointSize",
+      "u_verticalDelay",
+      "u_scatterDuration",
+      "u_returnStart",
+      "u_returnDuration",
+      "u_flowStrength",
+      "u_flowLimit",
+      "u_filamentDensity",
+      "u_motionNoise",
     ]);
     this.buffers = {
       position: context.createBuffer(),
@@ -86,6 +96,14 @@ class ParticleApp {
     this.resize();
     window.addEventListener("resize", this.resize);
     createControls(this.canvas, this.state, () => this.elapsedTime);
+    this.motionParams = createDebugPanel(DEFAULT_MOTION_PARAMS, {
+      onChange: (params) => {
+        this.motionParams = { ...params };
+      },
+      onBurst: () => {
+        this.state.burstStartTime = this.elapsedTime;
+      },
+    });
     this.load();
     this.animate();
   }
@@ -152,7 +170,7 @@ class ParticleApp {
     requestAnimationFrame(this.animate);
 
     const { gl, state } = this;
-    if (!state.dragging) state.targetRotationY += 0.0014;
+    if (!state.dragging) state.targetRotationY += this.motionParams.autoRotateSpeed;
     state.rotationX += (state.targetRotationX - state.rotationX) * 0.1;
     state.rotationY += (state.targetRotationY - state.rotationY) * 0.1;
     state.zoom += (state.targetZoom - state.zoom) * 0.12;
@@ -176,7 +194,15 @@ class ParticleApp {
     gl.uniform1f(uniforms.u_rotationY, state.rotationY);
     gl.uniform1f(uniforms.u_aspect, this.height / Math.max(1, this.width));
     gl.uniform1f(uniforms.u_zoom, state.zoom);
-    gl.uniform1f(uniforms.u_pointSize, POINT_SIZE * this.dpr);
+    gl.uniform1f(uniforms.u_pointSize, this.motionParams.pointSize * this.dpr);
+    gl.uniform1f(uniforms.u_verticalDelay, this.motionParams.verticalDelay);
+    gl.uniform1f(uniforms.u_scatterDuration, this.motionParams.scatterDuration);
+    gl.uniform1f(uniforms.u_returnStart, this.motionParams.returnStart);
+    gl.uniform1f(uniforms.u_returnDuration, this.motionParams.returnDuration);
+    gl.uniform1f(uniforms.u_flowStrength, this.motionParams.flowStrength);
+    gl.uniform1f(uniforms.u_flowLimit, this.motionParams.flowLimit);
+    gl.uniform1f(uniforms.u_filamentDensity, this.motionParams.filamentDensity);
+    gl.uniform1f(uniforms.u_motionNoise, this.motionParams.motionNoise);
   }
 }
 
@@ -197,4 +223,3 @@ function createStatus() {
 }
 
 new ParticleApp(canvas, gl).start();
-

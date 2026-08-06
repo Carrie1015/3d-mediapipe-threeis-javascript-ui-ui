@@ -11,6 +11,14 @@ export const vertexShaderSource = `
   uniform float u_zoom;
   uniform float u_pointSize;
   uniform float u_burstAge;
+  uniform float u_verticalDelay;
+  uniform float u_scatterDuration;
+  uniform float u_returnStart;
+  uniform float u_returnDuration;
+  uniform float u_flowStrength;
+  uniform float u_flowLimit;
+  uniform float u_filamentDensity;
+  uniform float u_motionNoise;
 
   varying vec3 v_color;
   varying float v_keep;
@@ -21,12 +29,12 @@ export const vertexShaderSource = `
     float topOrder = smoothstep(-1.9, 2.0, a_position.y);
     float randomA = fract(sin(a_seed * 13.71) * 43758.5453);
     float randomB = fract(sin(a_seed * 6.43) * 24634.6345);
-    float verticalDelay = (1.0 - topOrder) * 1.75;
+    float verticalDelay = (1.0 - topOrder) * u_verticalDelay;
     float delay = verticalDelay + randomA * 0.12;
     float age = max(0.0, u_burstAge - delay);
-    float scatter = smoothstep(0.0, 1.05, age);
+    float scatter = smoothstep(0.0, u_scatterDuration, age);
     float returnDelay = topOrder * 0.74 + randomB * 0.42;
-    float returnFlow = smoothstep(3.85 + returnDelay, 5.75 + returnDelay, age);
+    float returnFlow = smoothstep(u_returnStart + returnDelay, u_returnStart + u_returnDuration + returnDelay, age);
     float mist = max(0.0, scatter * (1.0 - returnFlow));
 
     float side = sin(a_seed * 2.41);
@@ -36,8 +44,10 @@ export const vertexShaderSource = `
     float heightBand = fract((a_position.y + 2.2) * 2.8 + strandId * 0.17);
     float strandCore = abs(sin(strandId * 1.37 + a_position.y * 5.2 + a_position.x * 2.7 + a_position.z * 1.8));
     float layerGate = smoothstep(0.72, 0.98, heightBand) * (1.0 - smoothstep(0.98, 1.0, heightBand));
-    float strandGate = max(smoothstep(0.955, 0.996, strandCore), layerGate * 0.88);
-    float filamentGate = max(strandGate, smoothstep(0.9975, 1.0, randomA));
+    float strandThreshold = clamp(1.0 - u_filamentDensity * 0.045, 0.78, 0.995);
+    float dustThreshold = clamp(1.0 - u_filamentDensity * 0.0025, 0.95, 0.9998);
+    float strandGate = max(smoothstep(strandThreshold, 0.996, strandCore), layerGate * 0.88);
+    float filamentGate = max(strandGate, smoothstep(dustThreshold, 1.0, randomA));
     vec3 laneDir = normalize(vec3(
       sin(strandId * 1.91 + side * 0.35) * 0.48,
       1.0,
@@ -61,9 +71,9 @@ export const vertexShaderSource = `
     float peel = smoothstep(0.0, 0.36, scatter);
     float longTrail = 0.48 + grain * 0.58 + topOrder * 1.35;
     float sparsePull = 0.01 + filamentGate * 1.36;
-    vec3 flowOffset = (ribbon * longTrail * sparsePull + filament) * mist;
-    flowOffset += normalFlow * peel * mist * filamentGate * 0.38;
-    float flowLimit = 0.82 + topOrder * 0.82 + strandGate * 0.28;
+    vec3 flowOffset = (ribbon * longTrail * sparsePull + filament) * mist * u_flowStrength;
+    flowOffset += normalFlow * peel * mist * filamentGate * 0.38 * u_flowStrength;
+    float flowLimit = (0.82 + topOrder * 0.82 + strandGate * 0.28) * u_flowLimit;
     float flowLength = length(flowOffset);
     if (flowLength > flowLimit) {
       flowOffset = normalize(flowOffset) * flowLimit;
@@ -74,7 +84,7 @@ export const vertexShaderSource = `
       sin(u_time * 0.9 + a_seed + p.y * 2.1) * 0.0008,
       cos(u_time * 0.8 + a_seed) * 0.0006,
       sin(u_time * 0.85 + a_seed + p.x * 1.9) * 0.0008
-    );
+    ) * u_motionNoise;
 
     float sy = sin(u_rotationY);
     float cy = cos(u_rotationY);
@@ -117,9 +127,9 @@ export const vertexShaderSource = `
     float airy = 1.0 + mist * (0.08 + fract(sin(a_seed * 5.31) * 43758.5453) * 0.1);
     v_color = clamp(a_color * shade * airy, 0.0, 1.0);
     float dissolveLines = 1.0 - smoothstep(1.65, 2.45, age);
-    float gatherLines = smoothstep(3.18 + returnDelay, 3.78 + returnDelay, age);
+    float gatherLines = smoothstep(u_returnStart - 0.67 + returnDelay, u_returnStart - 0.07 + returnDelay, age);
     float filamentWindow = clamp(max(dissolveLines, gatherLines), 0.0, 1.0);
-    float hiddenHold = smoothstep(2.65, 3.0, age) * (1.0 - smoothstep(3.15 + returnDelay, 3.58 + returnDelay, age));
+    float hiddenHold = smoothstep(u_returnStart - 1.2, u_returnStart - 0.85, age) * (1.0 - smoothstep(u_returnStart - 0.7 + returnDelay, u_returnStart - 0.27 + returnDelay, age));
     float transitionKeep = max(filamentGate * filamentWindow, 0.001);
     float returnReveal = smoothstep(0.86, 1.0, returnFlow);
     v_keep = mix(1.0, transitionKeep, mist * (1.0 - returnReveal));
@@ -149,4 +159,3 @@ export const fragmentShaderSource = `
     gl_FragColor = vec4(mix(edgeColor, v_color, soft), 1.0);
   }
 `;
-
