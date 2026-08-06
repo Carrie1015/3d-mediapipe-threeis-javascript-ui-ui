@@ -4,7 +4,7 @@ import {
   DEFAULT_MOTION_PARAMS,
   MAX_DPR,
   MAX_PARTICLES,
-  MODEL_URL,
+  MODEL_OPTIONS,
 } from "./config.js";
 import { createControls } from "./controls.js";
 import { createDebugPanel } from "./debug-panel.js";
@@ -39,6 +39,8 @@ class ParticleApp {
     this.dpr = 1;
     this.particleCount = 0;
     this.loaded = false;
+    this.loadVersion = 0;
+    this.activeModelId = MODEL_OPTIONS[0].id;
     this.startTime = performance.now();
     this.motionParams = { ...DEFAULT_MOTION_PARAMS };
     this.state = {
@@ -96,15 +98,18 @@ class ParticleApp {
     this.resize();
     window.addEventListener("resize", this.resize);
     createControls(this.canvas, this.state, () => this.elapsedTime);
-    this.motionParams = createDebugPanel(DEFAULT_MOTION_PARAMS, {
+    this.motionParams = createDebugPanel(DEFAULT_MOTION_PARAMS, MODEL_OPTIONS, {
       onChange: (params) => {
         this.motionParams = { ...params };
       },
       onBurst: () => {
         this.state.burstStartTime = this.elapsedTime;
       },
+      onModelChange: (model) => {
+        this.loadModel(model, true);
+      },
     });
-    this.load();
+    this.loadModel(MODEL_OPTIONS[0], false);
     this.animate();
   }
 
@@ -112,28 +117,43 @@ class ParticleApp {
     return (performance.now() - this.startTime) / 1000;
   }
 
-  async load() {
+  async loadModel(model, triggerBurst) {
+    const loadVersion = this.loadVersion + 1;
+    this.loadVersion = loadVersion;
+    this.activeModelId = model.id;
+    this.showStatus(`加载${model.label}中`);
+
     try {
       window.__particleDebug.state = "fetching-model";
-      const response = await fetch(MODEL_URL);
+      const response = await fetch(model.url);
       if (!response.ok) throw new Error(`模型加载失败 ${response.status}`);
 
       const buffer = await response.arrayBuffer();
+      if (loadVersion !== this.loadVersion) return;
+
       window.__particleDebug.state = "parsing-model";
       const meshes = await parseGlb(buffer);
+      if (loadVersion !== this.loadVersion) return;
 
       window.__particleDebug.state = "building-million-point-cloud";
       const cloud = buildPointCloud(meshes, MAX_PARTICLES);
+      if (loadVersion !== this.loadVersion) return;
+
       this.particleCount = cloud.count;
       this.uploadPointCloud(cloud);
 
       this.loaded = true;
-      this.status.remove();
-      window.__particleDebug = { state: "ready", particleCount: this.particleCount };
+      this.hideStatus();
+      if (triggerBurst) this.state.burstStartTime = this.elapsedTime;
+      window.__particleDebug = {
+        state: "ready",
+        modelId: model.id,
+        particleCount: this.particleCount,
+      };
     } catch (error) {
       console.error(error);
       this.status.textContent = "模型加载失败";
-      window.__particleDebug = { state: "error", message: error.message };
+      window.__particleDebug = { state: "error", modelId: model.id, message: error.message };
     }
   }
 
@@ -203,6 +223,15 @@ class ParticleApp {
     gl.uniform1f(uniforms.u_flowLimit, this.motionParams.flowLimit);
     gl.uniform1f(uniforms.u_filamentDensity, this.motionParams.filamentDensity);
     gl.uniform1f(uniforms.u_motionNoise, this.motionParams.motionNoise);
+  }
+
+  showStatus(message) {
+    this.status.textContent = message;
+    if (!this.status.isConnected) document.body.appendChild(this.status);
+  }
+
+  hideStatus() {
+    if (this.status.isConnected) this.status.remove();
   }
 }
 

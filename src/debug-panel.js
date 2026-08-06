@@ -28,7 +28,7 @@ const CONTROL_GROUPS = [
   },
 ];
 
-export function createDebugPanel(defaults, callbacks) {
+export function createDebugPanel(defaults, models, callbacks) {
   injectPanelStyles();
 
   const params = {
@@ -42,6 +42,7 @@ export function createDebugPanel(defaults, callbacks) {
       <strong>Particle</strong>
       <button class="debug-panel__toggle" type="button" aria-label="折叠参数面板">-</button>
     </header>
+    <div class="debug-panel__models"></div>
     <div class="debug-panel__body"></div>
     <footer class="debug-panel__actions">
       <button type="button" data-action="burst">爆散</button>
@@ -50,7 +51,18 @@ export function createDebugPanel(defaults, callbacks) {
   `;
 
   const body = panel.querySelector(".debug-panel__body");
+  const modelSwitcher = panel.querySelector(".debug-panel__models");
   const controlsByKey = new Map();
+  let activeModelId = models[0]?.id;
+
+  for (const model of models) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = model.label;
+    button.dataset.modelId = model.id;
+    button.className = model.id === activeModelId ? "is-active" : "";
+    modelSwitcher.appendChild(button);
+  }
 
   for (const group of CONTROL_GROUPS) {
     const section = document.createElement("section");
@@ -94,6 +106,12 @@ export function createDebugPanel(defaults, callbacks) {
 
   panel.addEventListener("click", (event) => {
     const action = event.target.closest("[data-action]")?.dataset.action;
+    const modelId = event.target.closest("[data-model-id]")?.dataset.modelId;
+    if (modelId && modelId !== activeModelId) {
+      activeModelId = modelId;
+      syncModelButtons(panel, activeModelId);
+      callbacks.onModelChange(models.find((model) => model.id === modelId));
+    }
     if (action === "burst") callbacks.onBurst();
     if (action === "reset") {
       Object.assign(params, defaults);
@@ -142,6 +160,12 @@ function syncInputs(panel, params) {
   });
 }
 
+function syncModelButtons(panel, activeModelId) {
+  panel.querySelectorAll("[data-model-id]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.modelId === activeModelId);
+  });
+}
+
 function formatValue(value, digits) {
   return Number(value).toFixed(digits).replace(/\.?0+$/, "");
 }
@@ -170,6 +194,7 @@ function injectPanelStyles() {
     }
 
     .debug-panel__header,
+    .debug-panel__models,
     .debug-panel__actions {
       display: flex;
       align-items: center;
@@ -180,6 +205,13 @@ function injectPanelStyles() {
 
     .debug-panel__header {
       border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .debug-panel__models {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      padding: 10px 12px 6px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
     }
 
     .debug-panel__header strong {
@@ -201,6 +233,12 @@ function injectPanelStyles() {
 
     .debug-panel button:hover {
       background: rgba(30, 41, 59, 0.92);
+    }
+
+    .debug-panel button.is-active {
+      border-color: rgba(147, 197, 253, 0.82);
+      color: #bfdbfe;
+      background: rgba(59, 130, 246, 0.2);
     }
 
     .debug-panel__body {
@@ -245,6 +283,7 @@ function injectPanelStyles() {
     }
 
     .debug-panel.is-collapsed .debug-panel__body,
+    .debug-panel.is-collapsed .debug-panel__models,
     .debug-panel.is-collapsed .debug-panel__actions {
       display: none;
     }
