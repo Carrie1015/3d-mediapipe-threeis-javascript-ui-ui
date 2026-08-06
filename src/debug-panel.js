@@ -1,4 +1,4 @@
-const STORAGE_KEY = "particle-motion-params";
+const STORAGE_KEY = "particle-motion-params-v2";
 
 const CONTROL_GROUPS = [
   {
