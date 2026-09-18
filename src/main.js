@@ -1,13 +1,14 @@
 import {
   INITIAL_ROTATION_X,
   INITIAL_ZOOM,
+  BUDDHA_INFO,
   DEFAULT_MOTION_PARAMS,
   MAX_DPR,
   MAX_PARTICLES,
   MODEL_OPTIONS,
-} from "./config.js";
+} from "./config.js?v=switch-return-only-1";
 import { createControls } from "./controls.js";
-import { createDebugPanel } from "./debug-panel.js";
+import { createDebugPanel } from "./debug-panel.js?v=switch-return-only-1";
 import { parseGlb } from "./gl/glb-loader.js";
 import {
   createProgram,
@@ -16,9 +17,10 @@ import {
   uploadAttribute,
 } from "./gl/program.js";
 import { buildPointCloud } from "./particles/point-cloud.js";
-import { fragmentShaderSource, vertexShaderSource } from "./shaders.js";
+import { fragmentShaderSource, vertexShaderSource } from "./shaders.js?v=switch-return-only-1";
 
 const canvas = document.getElementById("stage");
+const infoPanel = document.getElementById("buddhaInfo");
 const gl = canvas.getContext("webgl", {
   alpha: false,
   antialias: false,
@@ -71,6 +73,8 @@ class ParticleApp {
       "u_rotationY",
       "u_aspect",
       "u_zoom",
+      "u_layoutOffsetX",
+      "u_layoutOffsetY",
       "u_pointSize",
       "u_verticalDelay",
       "u_scatterDuration",
@@ -94,6 +98,7 @@ class ParticleApp {
 
   start() {
     window.__particleDebug = { state: "boot" };
+    renderBuddhaInfo(this.activeModelId);
     this.initWebGL();
     this.resize();
     window.addEventListener("resize", this.resize);
@@ -104,6 +109,9 @@ class ParticleApp {
       },
       onBurst: () => {
         this.state.burstStartTime = this.elapsedTime;
+      },
+      onSelect: (model) => {
+        renderBuddhaInfo(model.id);
       },
       onModelChange: (model) => {
         this.loadModel(model, true);
@@ -118,9 +126,12 @@ class ParticleApp {
   }
 
   async loadModel(model, triggerBurst) {
+    if (!model) return;
+
     const loadVersion = this.loadVersion + 1;
     this.loadVersion = loadVersion;
     this.activeModelId = model.id;
+    renderBuddhaInfo(model.id);
     this.showStatus(`加载${model.label}中`);
 
     try {
@@ -144,7 +155,9 @@ class ParticleApp {
 
       this.loaded = true;
       this.hideStatus();
-      if (triggerBurst) this.state.burstStartTime = this.elapsedTime;
+      this.state.burstStartTime = triggerBurst
+        ? this.elapsedTime - (this.motionParams.returnStart + 0.22)
+        : this.elapsedTime - 20;
       window.__particleDebug = {
         state: "ready",
         modelId: model.id,
@@ -214,6 +227,8 @@ class ParticleApp {
     gl.uniform1f(uniforms.u_rotationY, state.rotationY);
     gl.uniform1f(uniforms.u_aspect, this.height / Math.max(1, this.width));
     gl.uniform1f(uniforms.u_zoom, state.zoom);
+    gl.uniform1f(uniforms.u_layoutOffsetX, this.width > 860 ? 0.28 : 0.0);
+    gl.uniform1f(uniforms.u_layoutOffsetY, this.width > 860 ? 0.07 : 0.0);
     gl.uniform1f(uniforms.u_pointSize, this.motionParams.pointSize * this.dpr);
     gl.uniform1f(uniforms.u_verticalDelay, this.motionParams.verticalDelay);
     gl.uniform1f(uniforms.u_scatterDuration, this.motionParams.scatterDuration);
@@ -249,6 +264,24 @@ function createStatus() {
   ].join(";");
   document.body.appendChild(status);
   return status;
+}
+
+function renderBuddhaInfo(modelId) {
+  if (!infoPanel) return;
+  const info = BUDDHA_INFO[modelId] || BUDDHA_INFO[MODEL_OPTIONS[0].id];
+  infoPanel.innerHTML = `
+    <p class="info-panel__roman">${info.roman}</p>
+    <h1>${info.title}</h1>
+    <p class="info-panel__alias">${info.alias}</p>
+    <div class="info-panel__meta">
+      <span>${info.direction}</span>
+      <span>${info.wisdom}</span>
+    </div>
+    <p class="info-panel__summary">${info.summary}</p>
+    <ul>
+      ${info.points.map((point) => `<li>${point}</li>`).join("")}
+    </ul>
+  `;
 }
 
 new ParticleApp(canvas, gl).start();

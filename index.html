@@ -16,9 +16,14 @@
       margin: 0;
       overflow: hidden;
       background: #000;
+      color: rgba(245, 232, 202, 0.94);
+      font-family: "Songti SC", "Noto Serif SC", "STSong", serif;
     }
 
     #stage {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
       display: block;
       width: 100vw;
       height: 100vh;
@@ -29,11 +34,131 @@
     #stage:active {
       cursor: grabbing;
     }
+
+    .scene-frame {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.62) 30%, rgba(0, 0, 0, 0.08) 58%, rgba(0, 0, 0, 0.36) 100%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 26%, rgba(0, 0, 0, 0.72) 100%);
+    }
+
+    .info-panel {
+      position: fixed;
+      left: clamp(72px, 8vw, 150px);
+      top: clamp(46px, 10vh, 118px);
+      z-index: 5;
+      width: min(430px, 34vw);
+      max-height: calc(100vh - 290px);
+      overflow: hidden;
+      pointer-events: none;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.86);
+    }
+
+    .info-panel__roman {
+      margin: 0 0 28px;
+      color: #f2b64a;
+      font: 500 clamp(22px, 3.2vw, 52px) / 1.05 Optima, "Times New Roman", serif;
+      letter-spacing: 0.08em;
+    }
+
+    .info-panel h1 {
+      margin: 0;
+      color: #f4b64c;
+      font-size: clamp(40px, 5.8vw, 92px);
+      font-weight: 500;
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    .info-panel__alias {
+      margin: 18px 0 20px;
+      color: rgba(238, 199, 122, 0.78);
+      font-size: clamp(17px, 1.8vw, 28px);
+      line-height: 1.4;
+    }
+
+    .info-panel__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 0 0 20px;
+      color: rgba(245, 215, 154, 0.92);
+      font: 600 14px/1.2 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .info-panel__meta span {
+      padding: 6px 10px;
+      border: 1px solid rgba(218, 170, 85, 0.38);
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .info-panel__summary {
+      margin: 0;
+      max-width: 38em;
+      color: rgba(232, 211, 174, 0.76);
+      font: 15px/1.9 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .info-panel ul {
+      margin: 30px 0 0;
+      padding: 0;
+      list-style: none;
+      color: rgba(239, 196, 107, 0.82);
+      font-size: clamp(18px, 1.6vw, 26px);
+      line-height: 1.9;
+    }
+
+    .info-panel li::before {
+      content: "-";
+      margin-right: 8px;
+    }
+
+    @media (max-width: 860px) {
+      .scene-frame {
+        background:
+          linear-gradient(180deg, rgba(0, 0, 0, 0.84) 0%, rgba(0, 0, 0, 0.2) 42%, rgba(0, 0, 0, 0.78) 100%);
+      }
+
+      .info-panel {
+        top: 24px;
+        left: 28px;
+        width: min(360px, calc(100vw - 44px));
+        max-height: 34vh;
+      }
+
+      .info-panel__summary {
+        display: none;
+      }
+
+      .info-panel ul {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
   <canvas id="stage" aria-label="3D 佛像粒子动态展示"></canvas>
+  <div class="scene-frame" aria-hidden="true"></div>
+  <section id="buddhaInfo" class="info-panel" aria-live="polite">
+    <p class="info-panel__roman">AMITAYUS</p>
+    <h1>无量寿佛</h1>
+    <p class="info-panel__alias">又称“阿弥陀佛”</p>
+    <div class="info-panel__meta">
+      <span>西方</span>
+      <span>妙观察智</span>
+    </div>
+    <p class="info-panel__summary">五方佛体系中，西方佛多对应阿弥陀佛，也常以无量寿、无量光的意象表达极乐净土与接引愿力。</p>
+    <ul>
+      <li>西方净土</li>
+      <li>莲华部</li>
+      <li>长寿与光明</li>
+    </ul>
+  </section>
 
-  <script type="module" src="./src/main.js"></script>
+  <script type="module" src="./src/main.js?v=switch-return-only-1"></script>
 </body>
 </html>
