@@ -30,12 +30,15 @@ export async function parseGlb(arrayBuffer) {
       const uvs = primitive.attributes?.TEXCOORD_0 === undefined
         ? null
         : readAccessor(gltf, binChunk, primitive.attributes.TEXCOORD_0);
+      const indices = primitive.indices === undefined
+        ? null
+        : readAccessor(gltf, binChunk, primitive.indices);
       const material = gltf.materials?.[primitive.material];
       const textureIndex = material?.pbrMetallicRoughness?.baseColorTexture?.index;
       const texture = textureIndex === undefined ? null : textures[textureIndex];
       const factor = material?.pbrMetallicRoughness?.baseColorFactor || [1, 1, 1, 1];
 
-      meshes.push({ positions, normals, uvs, texture, factor });
+      meshes.push({ positions, normals, uvs, indices, texture, factor });
     }
   }
 
@@ -193,4 +196,3 @@ export function readNormal(mesh, vertexIndex) {
   const offset = vertexIndex * mesh.normals.componentCount;
   return normalizeVec3(readVec3(mesh.normals.values, offset));
 }
-

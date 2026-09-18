@@ -1,4 +1,4 @@
-import { BUDDHA_INFO } from "./config.js?v=switch-return-only-1";
+import { BUDDHA_INFO } from "./config.js?v=solid-original-preview-3";
 
 export function createDebugPanel(defaults, models, callbacks) {
   injectPanelStyles();
@@ -76,10 +76,10 @@ function injectPanelStyles() {
     .model-switcher {
       position: fixed;
       left: 50%;
-      bottom: 18px;
+      bottom: 20px;
       transform: translateX(-50%);
       z-index: 6;
-      width: min(1040px, calc(100vw - 32px));
+      width: min(1120px, calc(100vw - 34px));
       pointer-events: auto;
       font: 13px system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
@@ -88,38 +88,49 @@ function injectPanelStyles() {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 10px;
-      padding: 10px;
-      background: rgba(5, 7, 11, 0.56);
-      border: 1px solid rgba(210, 170, 94, 0.28);
-      border-radius: 8px;
-      box-shadow: 0 -14px 42px rgba(0, 0, 0, 0.38);
-      backdrop-filter: blur(14px);
+      gap: 9px;
+      padding: 12px;
+      background:
+        linear-gradient(180deg, rgba(18, 16, 12, 0.72), rgba(3, 4, 7, 0.64)),
+        rgba(0, 0, 0, 0.42);
+      border: 1px solid rgba(216, 166, 74, 0.34);
+      border-radius: 999px;
+      box-shadow:
+        0 -16px 48px rgba(0, 0, 0, 0.42),
+        inset 0 1px 0 rgba(255, 235, 194, 0.1),
+        inset 0 -1px 0 rgba(121, 78, 18, 0.18);
+      backdrop-filter: blur(18px) saturate(130%);
     }
 
     .model-switcher button {
-      min-width: 92px;
-      height: 34px;
-      padding: 0 14px;
-      border: 1px solid rgba(207, 163, 82, 0.34);
-      border-radius: 6px;
-      color: rgba(243, 219, 174, 0.88);
-      background: rgba(14, 16, 22, 0.7);
+      min-width: 94px;
+      height: 36px;
+      padding: 0 16px;
+      border: 1px solid rgba(209, 166, 88, 0.32);
+      border-radius: 999px;
+      color: rgba(241, 218, 176, 0.82);
+      background: linear-gradient(180deg, rgba(28, 24, 18, 0.74), rgba(8, 9, 13, 0.66));
       font: inherit;
+      letter-spacing: 0;
       cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 239, 201, 0.06);
+      transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, background 160ms ease, box-shadow 160ms ease;
     }
 
     .model-switcher button:hover {
       color: rgba(255, 237, 196, 0.98);
-      background: rgba(32, 26, 18, 0.82);
+      background: linear-gradient(180deg, rgba(47, 37, 20, 0.82), rgba(14, 13, 14, 0.78));
       border-color: rgba(238, 184, 82, 0.6);
+      transform: translateY(-1px);
     }
 
     .model-switcher button.is-active {
-      color: #111;
-      background: linear-gradient(180deg, #f6c766 0%, #d49535 100%);
-      border-color: rgba(255, 219, 138, 0.92);
-      box-shadow: 0 0 20px rgba(226, 163, 65, 0.24);
+      color: #160f05;
+      background: linear-gradient(180deg, #ffe19a 0%, #e4ae4e 44%, #b97722 100%);
+      border-color: rgba(255, 229, 160, 0.96);
+      box-shadow:
+        0 0 24px rgba(226, 163, 65, 0.34),
+        inset 0 1px 0 rgba(255, 247, 212, 0.44);
     }
 
     @media (max-width: 720px) {

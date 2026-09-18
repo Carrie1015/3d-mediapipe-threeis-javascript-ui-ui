@@ -48,7 +48,7 @@ function pickMeshForVertex(meshes, globalIndex) {
   return { mesh, localIndex: Math.max(0, mesh.positions.count - 1) };
 }
 
-function sampleTextureColor(mesh, vertexIndex, point) {
+export function sampleTextureColor(mesh, vertexIndex, point) {
   if (!mesh.texture || !mesh.uvs) {
     return fallbackModelColor(point);
   }
@@ -76,4 +76,3 @@ function fallbackModelColor(point) {
     b: 78 + height * 30,
   };
 }
-

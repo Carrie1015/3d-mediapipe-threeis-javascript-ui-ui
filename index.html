@@ -20,6 +20,20 @@
       font-family: "Songti SC", "Noto Serif SC", "STSong", serif;
     }
 
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(204, 142, 45, 0.08) 0 1px, transparent 1px 100%),
+        linear-gradient(180deg, rgba(204, 142, 45, 0.045) 0 1px, transparent 1px 100%);
+      background-size: 96px 96px;
+      mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.26) 46%, transparent 82%);
+      opacity: 0.42;
+    }
+
     #stage {
       position: fixed;
       inset: 0;
@@ -41,8 +55,31 @@
       z-index: 2;
       pointer-events: none;
       background:
-        linear-gradient(90deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.62) 30%, rgba(0, 0, 0, 0.08) 58%, rgba(0, 0, 0, 0.36) 100%),
-        linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 26%, rgba(0, 0, 0, 0.72) 100%);
+        linear-gradient(90deg, rgba(0, 0, 0, 0.95) 0%, rgba(9, 7, 3, 0.76) 31%, rgba(0, 0, 0, 0.1) 58%, rgba(0, 0, 0, 0.44) 100%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0) 28%, rgba(0, 0, 0, 0.78) 100%),
+        linear-gradient(115deg, rgba(197, 143, 55, 0.14) 0%, rgba(197, 143, 55, 0) 28%);
+    }
+
+    .scene-frame::before {
+      content: "";
+      position: absolute;
+      left: clamp(44px, 6.4vw, 116px);
+      top: clamp(38px, 8vh, 92px);
+      width: 1px;
+      height: min(560px, 58vh);
+      background: linear-gradient(180deg, transparent, rgba(226, 171, 76, 0.62), rgba(226, 171, 76, 0.08), transparent);
+      opacity: 0.72;
+    }
+
+    .scene-frame::after {
+      content: "";
+      position: absolute;
+      left: clamp(92px, 9vw, 172px);
+      top: clamp(108px, 15vh, 164px);
+      width: min(520px, 35vw);
+      height: 1px;
+      background: linear-gradient(90deg, rgba(226, 171, 76, 0.58), rgba(226, 171, 76, 0.08), transparent);
+      opacity: 0.64;
     }
 
     .info-panel {
@@ -54,29 +91,32 @@
       max-height: calc(100vh - 290px);
       overflow: hidden;
       pointer-events: none;
-      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.86);
+      padding: 4px 0 0 0;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.92), 0 0 24px rgba(196, 128, 30, 0.14);
     }
 
     .info-panel__roman {
-      margin: 0 0 28px;
-      color: #f2b64a;
-      font: 500 clamp(22px, 3.2vw, 52px) / 1.05 Optima, "Times New Roman", serif;
-      letter-spacing: 0.08em;
+      margin: 0 0 24px;
+      color: #f5bf5d;
+      font: 500 clamp(21px, 3vw, 48px) / 1.05 Optima, "Times New Roman", serif;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
     }
 
     .info-panel h1 {
       margin: 0;
-      color: #f4b64c;
-      font-size: clamp(40px, 5.8vw, 92px);
+      color: #f6bd55;
+      font-size: clamp(42px, 5.4vw, 86px);
       font-weight: 500;
       line-height: 1.06;
       letter-spacing: 0;
+      text-shadow: 0 0 30px rgba(232, 157, 48, 0.18), 0 3px 18px rgba(0, 0, 0, 0.9);
     }
 
     .info-panel__alias {
-      margin: 18px 0 20px;
-      color: rgba(238, 199, 122, 0.78);
-      font-size: clamp(17px, 1.8vw, 28px);
+      margin: 18px 0 22px;
+      color: rgba(241, 205, 133, 0.78);
+      font-size: clamp(16px, 1.6vw, 25px);
       line-height: 1.4;
     }
 
@@ -84,37 +124,41 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin: 0 0 20px;
-      color: rgba(245, 215, 154, 0.92);
-      font: 600 14px/1.2 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0 0 24px;
+      color: rgba(250, 224, 170, 0.92);
+      font: 600 13px/1.2 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .info-panel__meta span {
-      padding: 6px 10px;
-      border: 1px solid rgba(218, 170, 85, 0.38);
-      border-radius: 4px;
-      background: rgba(0, 0, 0, 0.2);
+      padding: 7px 12px;
+      border: 1px solid rgba(218, 170, 85, 0.44);
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(56, 37, 12, 0.38), rgba(0, 0, 0, 0.18));
+      box-shadow: inset 0 1px 0 rgba(255, 231, 183, 0.08), 0 0 18px rgba(203, 144, 51, 0.08);
     }
 
     .info-panel__summary {
       margin: 0;
       max-width: 38em;
-      color: rgba(232, 211, 174, 0.76);
-      font: 15px/1.9 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 18px 20px 18px 0;
+      border-top: 1px solid rgba(222, 170, 80, 0.2);
+      color: rgba(235, 218, 183, 0.78);
+      font: 15px/1.92 system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .info-panel ul {
-      margin: 30px 0 0;
+      margin: 26px 0 0;
       padding: 0;
       list-style: none;
-      color: rgba(239, 196, 107, 0.82);
-      font-size: clamp(18px, 1.6vw, 26px);
-      line-height: 1.9;
+      color: rgba(241, 196, 99, 0.86);
+      font-size: clamp(17px, 1.44vw, 23px);
+      line-height: 1.84;
     }
 
     .info-panel li::before {
       content: "-";
-      margin-right: 8px;
+      margin-right: 10px;
+      color: rgba(244, 204, 122, 0.72);
     }
 
     @media (max-width: 860px) {
@@ -128,6 +172,11 @@
         left: 28px;
         width: min(360px, calc(100vw - 44px));
         max-height: 34vh;
+      }
+
+      .scene-frame::before,
+      .scene-frame::after {
+        display: none;
       }
 
       .info-panel__summary {
@@ -159,6 +208,6 @@
     </ul>
   </section>
 
-  <script type="module" src="./src/main.js?v=switch-return-only-1"></script>
+  <script type="module" src="./src/main.js?v=solid-original-preview-3"></script>
 </body>
 </html>

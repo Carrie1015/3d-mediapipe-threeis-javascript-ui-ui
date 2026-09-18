@@ -28,6 +28,12 @@ export function getUniformLocations(context, program, names) {
 export function uploadAttribute(context, buffer, data, location, size) {
   context.bindBuffer(context.ARRAY_BUFFER, buffer);
   context.bufferData(context.ARRAY_BUFFER, data, context.STATIC_DRAW);
+  bindAttribute(context, buffer, location, size);
+}
+
+export function bindAttribute(context, buffer, location, size) {
+  if (location < 0) return;
+  context.bindBuffer(context.ARRAY_BUFFER, buffer);
   context.enableVertexAttribArray(location);
   context.vertexAttribPointer(location, size, context.FLOAT, false, 0, 0);
 }
@@ -44,4 +50,3 @@ function createShader(context, type, source) {
 
   return shader;
 }
-
